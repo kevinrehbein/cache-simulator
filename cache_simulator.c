@@ -127,16 +127,22 @@ int main(int argc, char *argv[]) {
     switch (flagOut) {
         case 0:
             printf("\n-----RESULTADOS-----\n");
-            printf("Número de misses compulsórios: %.0f\n", miss_compulsorio);
-            printf("Número de misses conflito: %.0f\n", miss_conflito);
-            printf("Número de misses capacidade: %.0f\n", miss_capacidade);
-            printf("Número de hits: %.0f\n", hit);
+            printf("Numero de misses: %.0f\n", miss_capacidade + miss_compulsorio + miss_conflito);
+            printf("Taxa de misses: %.2f\n", (miss_capacidade + miss_compulsorio + miss_conflito) / total_acessos);
+            printf("Numero de misses compulsorios: %.0f\n", miss_compulsorio);
+            printf("Taxa de misses compulsorios: %.2f\n", miss_compulsorio/(miss_capacidade + miss_compulsorio + miss_conflito));
+            printf("Numero de misses de conflito: %.0f\n", miss_conflito);
+            printf("Taxa de misses de conflito: %.2f\n", miss_conflito/(miss_capacidade + miss_compulsorio + miss_conflito));
+            printf("Numero de misses de capacidade: %.0f\n", miss_capacidade);
+            printf("Taxa de misses de capacidade: %.2f\n", miss_capacidade/(miss_capacidade + miss_compulsorio + miss_conflito));
+            printf("Numero de hits: %.0f\n", hit);
+            printf("Taxa de hits: %.2f\n", hit/total_acessos);
             break;
 
         case 1:
             printf("%.0f ", total_acessos);
-            printf("%.2f ", hit / total_acessos);
-            printf("%.2f ", (miss_capacidade + miss_compulsorio + miss_conflito) / total_acessos);
+            printf("%.4f ", hit / total_acessos);
+            printf("%.4f ", (miss_capacidade + miss_compulsorio + miss_conflito) / total_acessos);
             printf("%.2f ", miss_compulsorio / (miss_capacidade + miss_compulsorio + miss_conflito));
             printf("%.2f ", miss_capacidade / (miss_capacidade + miss_compulsorio + miss_conflito));
             printf("%.2f ", miss_conflito / (miss_capacidade + miss_compulsorio + miss_conflito));
