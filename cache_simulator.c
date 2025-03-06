@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
             printf("%.4f ", (miss_capacidade + miss_compulsorio + miss_conflito) / total_acessos);
             printf("%.2f ", miss_compulsorio / (miss_capacidade + miss_compulsorio + miss_conflito));
             printf("%.2f ", miss_capacidade / (miss_capacidade + miss_compulsorio + miss_conflito));
-            printf("%.2f \n", miss_conflito / (miss_capacidade + miss_compulsorio + miss_conflito));
+            printf("%.2f ", miss_conflito / (miss_capacidade + miss_compulsorio + miss_conflito));
             break;
     }
 
