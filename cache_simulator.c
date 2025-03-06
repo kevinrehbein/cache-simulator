@@ -4,6 +4,13 @@
 #include <time.h>
 #include <string.h>
 
+//estrutura da cache
+typedef struct {
+    int validade;
+    int tag;
+    int momento_do_acesso; //para FIFO e LRU
+} CacheBlock;
+
 int main(int argc, char *argv[]) {
     if (argc != 7) {
         printf("Número de argumentos incorreto. Utilize:\n");
@@ -31,22 +38,15 @@ int main(int argc, char *argv[]) {
     float miss_compulsorio = 0, miss_conflito = 0, miss_capacidade = 0;
     float hit = 0;
     float total_acessos = 0;
-    int n_bits_offset = log(bsize) / log(2);	//log2 (x) = logy (x) / logy (2)
-    int n_bits_indice = log(nsets) / log(2);
+    int n_bits_offset = log2(bsize);
+    int n_bits_indice = log2(nsets);
     int n_bits_tag = 32 - n_bits_offset - n_bits_indice;
-
-    //estrutura da cache para suportar associatividade
-    typedef struct {
-        int valid;
-        int tag;
-        int time; //para FIFO e LRU
-    } CacheBlock;
 
     CacheBlock cache[nsets][assoc];
     for (int i = 0; i < nsets; i++) {
         for (int j = 0; j < assoc; j++) {
-            cache[i][j].valid = 0;
-            cache[i][j].time = 0;
+            cache[i][j].validade = 0;
+            cache[i][j].momento_do_acesso = 0;
         }
     }
 
@@ -59,6 +59,10 @@ int main(int argc, char *argv[]) {
     srand(time(NULL)); //inicializa o gerador de números aleatórios para substituição Random
 
     while (fread(&endereco, 4, 1, arquivo) == 1) {
+        int hit_flag = 0;
+        int bloco = 0;
+        int momento_acesso_mais_antigo = total_acessos + 1; //inicializa com um valor maior que o total de acessos até o momento.
+        
         total_acessos++;
 
         //converte little endian para big endian
@@ -72,56 +76,85 @@ int main(int argc, char *argv[]) {
         indice = (endereco >> n_bits_offset) & ((int)pow(2, n_bits_indice) - 1);
         tag = endereco >> (32 - n_bits_tag);
 
-        int hit_flag = 0;
-        int replace_index = 0;
-        int oldest_time = total_acessos + 1; //inicializa com um valor grande
-
         //verifica se há um hit no conjunto
         for (int i = 0; i < assoc; i++) {
-            if (cache[indice][i].valid && cache[indice][i].tag == tag) {
+            if (cache[indice][i].validade && cache[indice][i].tag == tag) {
                 hit++;
                 hit_flag = 1;
-                if (strcmp(subst, "L") == 0) {
-                    cache[indice][i].time = total_acessos; //atualiza o tempo de acesso para LRU
+
+                if (strcmp(subst, "L") == 0){
+                    cache[indice][i].momento_do_acesso = total_acessos;      //atualiza o momento de acesso para LRU
                 }
                 break;
             }
         }
 
-        if (!hit_flag) {
-            //miss - escolhe um bloco para substituir
-            if (strcmp(subst, "R") == 0) {
-                replace_index = rand() % assoc; //substituição Random
-            } else {
-                //substituição FIFO ou LRU
-                for (int i = 0; i < assoc; i++) {
-                    if (!cache[indice][i].valid) {
-                        replace_index = i;
-                        break;
-                    }
-                    if (cache[indice][i].time < oldest_time) {
-                        oldest_time = cache[indice][i].time;
-                        replace_index = i;
-                    }
+        if (!hit_flag) { 
+
+            int espaco_vazio = 0;
+            
+            //miss compulsório
+            for(int i = 0; i < assoc; i++){
+                if (!cache[indice][i].validade) { 
+                    miss_compulsorio++;     //atualiza estatística de miss
+                    espaco_vazio = 1;
+
+                    //insere o bloco
+                    cache[indice][i].validade = 1;      
+                    cache[indice][i].tag = tag;
+                    cache[indice][i].momento_do_acesso = total_acessos;     // registra o momento do acesso para FIFO e LRU 
+                    break;
                 }
             }
+            
+            //miss conflito ou capacidade
+            if (!espaco_vazio){    
 
-            //atualiza estatísticas de miss
-            if (!cache[indice][replace_index].valid) {
-                miss_compulsorio++;
-            } else {
-                miss_conflito++;
+                if (assoc == 1) {
+                    miss_conflito++;    //atualiza estatística de miss - map. direto todos os misses são de conflito
+
+                } else if (nsets == 1){
+                    miss_capacidade++;  //atualiza estatística de miss - map. total. assoc. todos os misses são de capacidade
+                                        
+                } else {
+                    
+                    for(int i = 0; i < nsets; i++){
+                        for (int j = 0; j < assoc; j++) {
+                            if(!cache[i][j].validade){
+                                espaco_vazio = 1;
+                                break;
+                            }
+                        }
+                        if(espaco_vazio)
+                            break;
+                    }
+
+                    if (espaco_vazio) {
+                        miss_conflito++;
+
+                    } else miss_capacidade++;
+                }
+                
+                //escolhe o bloco a ser substituido
+                if (strcmp(subst, "R") == 0) {
+                    //substituição Random
+                    bloco = rand() % assoc;     
+                } else {
+                    //substituição LRU e FIFO
+                    for (int i = 0; i < assoc; i++) {
+                        if (cache[indice][i].momento_do_acesso < momento_acesso_mais_antigo) {
+                            momento_acesso_mais_antigo = cache[indice][i].momento_do_acesso;
+                            bloco = i;      // resulta o bloco mais antigo inserido(FIFO) ou utilizado(LRU)
+                        }
+                    }
+                }
+
+                //substitui o bloco
+                cache[indice][bloco].tag = tag;
+                cache[indice][bloco].momento_do_acesso = total_acessos;     // registra o momento do acesso para FIFO e LRU
             }
-
-            //substitui o bloco
-            cache[indice][replace_index].valid = 1;
-            cache[indice][replace_index].tag = tag;
-            cache[indice][replace_index].time = total_acessos;
         }
     }
-
-    //calcula misses de capacidade
-    miss_capacidade = total_acessos - hit - miss_compulsorio - miss_conflito;
 
     //saída dos resultados
     switch (flagOut) {
@@ -145,7 +178,7 @@ int main(int argc, char *argv[]) {
             printf("%.4f ", (miss_capacidade + miss_compulsorio + miss_conflito) / total_acessos);
             printf("%.2f ", miss_compulsorio / (miss_capacidade + miss_compulsorio + miss_conflito));
             printf("%.2f ", miss_capacidade / (miss_capacidade + miss_compulsorio + miss_conflito));
-            printf("%.2f ", miss_conflito / (miss_capacidade + miss_compulsorio + miss_conflito));
+            printf("%.2f \n", miss_conflito / (miss_capacidade + miss_compulsorio + miss_conflito));
             break;
     }
 
