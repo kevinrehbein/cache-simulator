@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
     printf("arquivo = %s\n", arquivoEntrada);
 
     FILE *arquivo;
+    char *caminho;
     int endereco, b76, b54, b32, b10;
     int tag, indice;
     float miss_compulsorio = 0, miss_conflito = 0, miss_capacidade = 0;
@@ -42,6 +43,15 @@ int main(int argc, char *argv[]) {
     int n_bits_indice = log2(nsets);
     int n_bits_tag = 32 - n_bits_offset - n_bits_indice;
 
+    sprintf(caminho, "Endereços/%s", arquivoEntrada);
+
+    //testa bertura de arquivo
+    if ((arquivo = fopen(caminho, "rb")) == NULL) {
+        printf("Não foi possível abrir o arquivo!");
+        exit(EXIT_FAILURE);
+    }
+
+    //Inicializa cache com bits de validade e momento do acesso zerado
     CacheBlock cache[nsets][assoc];
     for (int i = 0; i < nsets; i++) {
         for (int j = 0; j < assoc; j++) {
@@ -50,18 +60,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    //testa bertura de arquivo
-    if ((arquivo = fopen(arquivoEntrada, "rb")) == NULL) {
-        printf("Não foi possível abrir o arquivo!");
-        exit(EXIT_FAILURE);
-    }
-
     srand(time(NULL)); //inicializa o gerador de números aleatórios para substituição Random
 
+    //lê um valor de 4 Bytes do arquivo por vez e armazena em endereço
     while (fread(&endereco, 4, 1, arquivo) == 1) {
         int hit_flag = 0;
         int bloco = 0;
         int momento_acesso_mais_antigo = total_acessos + 1; //inicializa com um valor maior que o total de acessos até o momento.
+        int espaco_vazio = 0;
         
         total_acessos++;
 
@@ -82,8 +88,9 @@ int main(int argc, char *argv[]) {
                 hit++;
                 hit_flag = 1;
 
+                //atualiza o momento de acesso se for LRU
                 if (strcmp(subst, "L") == 0){
-                    cache[indice][i].momento_do_acesso = total_acessos;      //atualiza o momento de acesso para LRU
+                    cache[indice][i].momento_do_acesso = total_acessos;
                 }
                 break;
             }
@@ -91,15 +98,13 @@ int main(int argc, char *argv[]) {
 
         if (!hit_flag) { 
 
-            int espaco_vazio = 0;
-            
             //miss compulsório
             for(int i = 0; i < assoc; i++){
                 if (!cache[indice][i].validade) { 
                     miss_compulsorio++;     //atualiza estatística de miss
                     espaco_vazio = 1;
 
-                    //insere o bloco
+                    //insere o bloco na cache
                     cache[indice][i].validade = 1;      
                     cache[indice][i].tag = tag;
                     cache[indice][i].momento_do_acesso = total_acessos;     // registra o momento do acesso para FIFO e LRU 
@@ -117,10 +122,11 @@ int main(int argc, char *argv[]) {
                     miss_capacidade++;  //atualiza estatística de miss - map. total. assoc. todos os misses são de capacidade
                                         
                 } else {
-                    
+
+                    //percorre cache e verfica ausência de capacidade
                     for(int i = 0; i < nsets; i++){
-                        for (int j = 0; j < assoc; j++) {
-                            if(!cache[i][j].validade){
+                        for (int j = 0; j < assoc; j++) {   
+                            if(!cache[i][j].validade){      
                                 espaco_vazio = 1;
                                 break;
                             }
@@ -128,10 +134,10 @@ int main(int argc, char *argv[]) {
                         if(espaco_vazio)
                             break;
                     }
-
+                    
+                    //atualiza estatística de miss conforme capacidadde
                     if (espaco_vazio) {
-                        miss_conflito++;
-
+                        miss_conflito++; 
                     } else miss_capacidade++;
                 }
                 
@@ -161,15 +167,15 @@ int main(int argc, char *argv[]) {
         case 0:
             printf("\n-----RESULTADOS-----\n");
             printf("Numero de misses: %.0f\n", miss_capacidade + miss_compulsorio + miss_conflito);
-            printf("Taxa de misses: %.2f\n", (miss_capacidade + miss_compulsorio + miss_conflito) / total_acessos);
+            printf("Taxa de misses: %.4f\n", (miss_capacidade + miss_compulsorio + miss_conflito) / total_acessos);
             printf("Numero de misses compulsorios: %.0f\n", miss_compulsorio);
-            printf("Taxa de misses compulsorios: %.2f\n", miss_compulsorio/(miss_capacidade + miss_compulsorio + miss_conflito));
+            printf("Taxa de misses compulsorios: %.4f\n", miss_compulsorio/(miss_capacidade + miss_compulsorio + miss_conflito));
             printf("Numero de misses de conflito: %.0f\n", miss_conflito);
-            printf("Taxa de misses de conflito: %.2f\n", miss_conflito/(miss_capacidade + miss_compulsorio + miss_conflito));
+            printf("Taxa de misses de conflito: %.4f\n", miss_conflito/(miss_capacidade + miss_compulsorio + miss_conflito));
             printf("Numero de misses de capacidade: %.0f\n", miss_capacidade);
-            printf("Taxa de misses de capacidade: %.2f\n", miss_capacidade/(miss_capacidade + miss_compulsorio + miss_conflito));
+            printf("Taxa de misses de capacidade: %.4f\n", miss_capacidade/(miss_capacidade + miss_compulsorio + miss_conflito));
             printf("Numero de hits: %.0f\n", hit);
-            printf("Taxa de hits: %.2f\n", hit/total_acessos);
+            printf("Taxa de hits: %.4f\n", hit/total_acessos);
             break;
 
         case 1:
