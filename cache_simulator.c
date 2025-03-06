@@ -24,16 +24,8 @@ int main(int argc, char *argv[]) {
     char *subst = argv[4];
     int flagOut = atoi(argv[5]);
     char *arquivoEntrada = argv[6];
-
-    printf("nsets = %d\n", nsets);
-    printf("bsize = %d\n", bsize);
-    printf("assoc = %d\n", assoc);
-    printf("subst = %s\n", subst);
-    printf("flagOut = %d\n", flagOut);
-    printf("arquivo = %s\n", arquivoEntrada);
-
     FILE *arquivo;
-    char *caminho;
+    char caminho[100];
     int endereco, b76, b54, b32, b10;
     int tag, indice;
     float miss_compulsorio = 0, miss_conflito = 0, miss_capacidade = 0;
@@ -165,7 +157,7 @@ int main(int argc, char *argv[]) {
     //saída dos resultados
     switch (flagOut) {
         case 0:
-            printf("\n-----RESULTADOS-----\n");
+            printf("-----RESULTADOS-----\n");
             printf("Numero de misses: %.0f\n", miss_capacidade + miss_compulsorio + miss_conflito);
             printf("Taxa de misses: %.4f\n", (miss_capacidade + miss_compulsorio + miss_conflito) / total_acessos);
             printf("Numero de misses compulsorios: %.0f\n", miss_compulsorio);
