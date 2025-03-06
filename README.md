@@ -1,6 +1,6 @@
 # cache-simulator
 
-Para compilar o arquivo main.c, utilize o seguinte comando via terminal: 
+Para compilar o arquivo main.c, utilize o seguinte comando via terminal no linux: 
 gcc cache_simulator.c -o cache_simulator -lm
 
 O "-lm" é necessário para linkar a biblioteca libm, de onde é utilizada a função log2.
