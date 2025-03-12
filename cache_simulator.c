@@ -35,12 +35,17 @@ int main(int argc, char *argv[]) {
     int n_bits_indice = log2(nsets);
     int n_bits_tag = 32 - n_bits_offset - n_bits_indice;
 
-    sprintf(caminho, "Endereços/%s", arquivoEntrada);
-
     //testa bertura de arquivo
+    sprintf(caminho, "Endereços/%s", arquivoEntrada);   //caminho Linux
+
     if ((arquivo = fopen(caminho, "rb")) == NULL) {
-        printf("Não foi possível abrir o arquivo!");
-        exit(EXIT_FAILURE);
+
+        sprintf(caminho, "Endereços\%s", arquivoEntrada);   //caminho Windows
+
+        if ((arquivo = fopen(caminho, "rb")) == NULL) {
+            printf("Não foi possível abrir o arquivo!");
+            exit(EXIT_FAILURE);
+        }
     }
 
     //Inicializa cache com bits de validade e momento do acesso zerado
