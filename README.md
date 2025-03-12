@@ -10,7 +10,7 @@ O "-lm" é necessário para linkar a biblioteca libm, de onde é utilizada a fun
 Para executar, basta utilizar o comando padrão:
 ./cache_simulator <nsets> <bsize> <assoc> <substituição> <flag_saida> arquivo_de_entrada
 
-O arquivo_de_entrada deve estar contido no diretório "Endereços".
+O arquivo_de_entrada deve estar contido no diretório "Enderecos".
 
 
 No Windows:
@@ -21,4 +21,4 @@ gcc cache_simulator.c -o cache_simulator
 Para executar, basta utilizar o comando padrão:
 .\cache_simulator <nsets> <bsize> <assoc> <substituição> <flag_saida> arquivo_de_entrada
 
-O arquivo_de_entrada deve estar contido no diretório "Endereços".
+O arquivo_de_entrada deve estar contido no diretório "Enderecos".

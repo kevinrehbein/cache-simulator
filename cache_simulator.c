@@ -36,16 +36,11 @@ int main(int argc, char *argv[]) {
     int n_bits_tag = 32 - n_bits_offset - n_bits_indice;
 
     //testa bertura de arquivo
-    sprintf(caminho, "Endereços/%s", arquivoEntrada);   //caminho Linux
+    sprintf(caminho, "Enderecos/%s", arquivoEntrada);   //caminho Linux
 
     if ((arquivo = fopen(caminho, "rb")) == NULL) {
-
-        sprintf(caminho, "Endereços\%s", arquivoEntrada);   //caminho Windows
-
-        if ((arquivo = fopen(caminho, "rb")) == NULL) {
-            printf("Não foi possível abrir o arquivo!");
-            exit(EXIT_FAILURE);
-        }
+        printf("Não foi possível abrir o arquivo!");
+        exit(EXIT_FAILURE);
     }
 
     //Inicializa cache com bits de validade e momento do acesso zerado
@@ -181,7 +176,7 @@ int main(int argc, char *argv[]) {
             printf("%.4f ", (miss_capacidade + miss_compulsorio + miss_conflito) / total_acessos);
             printf("%.2f ", miss_compulsorio / (miss_capacidade + miss_compulsorio + miss_conflito));
             printf("%.2f ", miss_capacidade / (miss_capacidade + miss_compulsorio + miss_conflito));
-            printf("%.2f ", miss_conflito / (miss_capacidade + miss_compulsorio + miss_conflito));
+            printf("%.2f \n", miss_conflito / (miss_capacidade + miss_compulsorio + miss_conflito));
             break;
     }
 
